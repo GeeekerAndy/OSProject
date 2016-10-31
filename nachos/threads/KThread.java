@@ -191,8 +191,10 @@ public class KThread {
 	Lib.assertTrue(toBeDestroyed == null);
 	toBeDestroyed = currentThread;
 
-
 	currentThread.status = statusFinished;
+	
+	//wake up all the threads waiting on the current thread.
+	currentThread.unjoin();
 	
 	sleep();
     }
@@ -273,10 +275,62 @@ public class KThread {
      * thread.
      */
     public void join() {
-	Lib.debug(dbgThread, "Joining to thread: " + toString());
-
-	Lib.assertTrue(this != currentThread);
-
+    	
+//	Lib.debug(dbgThread, "Joining to thread: " + toString());
+//	Lib.assertTrue(this != currentThread);
+//	
+//	boolean status = Machine.interrupt().disable();
+//	if(this.status != statusFinished) {
+//		readyQueue.waitForAccess(currentThread);
+//		currentThread.sleep();
+//		}
+//	Machine.interrupt().restore(status);
+    	
+    	if(currentThread.status == statusFinished) {
+    		/*
+    		 * Cannot join to a finished thread. 
+    		 */
+    		Lib.debug(dbgThread, "Attemping to join finished thread." + toString());    		
+    	} else {
+    		Lib.debug(dbgThread, "Joining to thread: " + toString());
+    		
+    		// A thread cannot join to itself.
+    		Lib.assertTrue(this != currentThread);
+    		
+    		// Join must be an automatic operation.
+    		boolean status = Machine.interrupt().disable();
+    		
+    		// Put a statusNew thread on the ready queue.
+    		if(currentThread.status == statusNew) {
+    			ready();
+    		}
+    		
+    		// Put the current thread on this threads joined threads list and sleep it
+    		linkedThreads.waitForAccess(currentThread);
+    		sleep();
+    		
+    		// Restore the machine status before the join call
+    		Machine.interrupt().restore(status);
+    		
+    	}
+    	
+	}
+    
+    /**
+     * Wake all threads that have joined to this thread and remove them from this threads joined thread set.
+     * 将所有join()到这个线程的线程唤醒，并且将它们从该线程的joined队列集合中移除。
+     */
+    
+    private void unjoin() {
+    	//Make sure that this thread is being called by the current finished thread.
+    	Lib.assertTrue(currentThread == this && currentThread.status == statusFinished && toBeDestroyed == currentThread);
+    	KThread wakingThread;
+    	while((wakingThread = linkedThreads.nextThread()) != null) {
+    		if(wakingThread.status != statusReady) {
+    			wakingThread.ready();
+    		}
+    	}
+    	
     }
 
     /**
@@ -390,21 +444,60 @@ public class KThread {
 	    for (int i=0; i<5; i++) {
 		System.out.println("*** thread " + which + " looped "
 				   + i + " times");
+//		if(i == 3){
+//			TestJoin testJoin = new TestJoin();
+//			new KThread(testJoin).join();
+//		}
 		currentThread.yield();
 	    }
 	}
 
 	private int which;
     }
-
+    
+    /**
+     * A thread to test join() in PingTest
+     */
+    public static class TestJoin implements Runnable {
+    	public TestJoin() {
+    		
+    	}
+    	public void run() {
+    		for(int i = 0; i < 3; i++) {
+    			System.out.println("This is TestJoin thread.");
+    			try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+    		}
+    	}
+    }
     /**
      * Tests whether this module is working.
      */
     public static void selfTest() {
 	Lib.debug(dbgThread, "Enter KThread.selfTest");
 	
-	new KThread(new PingTest(1)).setName("forked thread").fork();
-	new PingTest(0).run();
+//	new KThread(new PingTest(1)).setName("forked thread").fork();
+//	new PingTest(0).run();
+	
+//	TestJoin testJoin = new TestJoin();
+//	KThread newKThread = new KThread();
+//	newKThread.setTarget(testJoin);
+//	newKThread.fork();
+////	newKThread.join();
+//	new PingTest(3).run();
+	
+	PingTest test5 = new PingTest(5);
+	KThread newKThread = new KThread();
+	newKThread.setTarget(test5);
+	newKThread.fork();
+//	newKThread.join();
+	new PingTest(4).run();
+	
+
     }
 
     private static final char dbgThread = 't';
@@ -444,4 +537,11 @@ public class KThread {
     private static KThread currentThread = null;
     private static KThread toBeDestroyed = null;
     private static KThread idleThread = null;
+    
+    /**
+     * A list of threads that have joined to this thread
+     */
+    private ThreadQueue linkedThreads = ThreadedKernel.scheduler.newThreadQueue(true);
+    
 }
+

@@ -56,7 +56,7 @@ public class Semaphore {
 	boolean intStatus = Machine.interrupt().disable();
 
 	KThread thread = waitQueue.nextThread();
-	if (thread != null) {
+	if (thread != null) { 
 	    thread.ready();
 	}
 	else {

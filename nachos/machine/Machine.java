@@ -113,53 +113,54 @@ public final class Machine {
 	return result;
     }
 
+    //处理参数
     private static void processArgs() {
 	for (int i=0; i<args.length; ) {
 	    String arg = args[i++];
 	    if (arg.length() > 0 && arg.charAt(0) == '-') {
-		if (arg.equals("-d")) {
+			if (arg.equals("-d")) {		//enable debug
+			    Lib.assertTrue(i < args.length, "switch without argument");
+			    Lib.enableDebugFlags(args[i++]);
+			}
+			else if (arg.equals("-h")) {	//help
+			    System.out.print(help);
+			    System.exit(1);
+			}
+			else if (arg.equals("-m")) {	//numPhysPages
+			    Lib.assertTrue(i < args.length, "switch without argument");
+			    try {
+				numPhysPages = Integer.parseInt(args[i++]);
+			    }
+			    catch (NumberFormatException e) {
+				Lib.assertNotReached("bad value for -m switch");
+			    }
+			}
+			else if (arg.equals("-s")) {	//randomSeed
+			    Lib.assertTrue(i < args.length, "switch without argument");
+			    try {
+				randomSeed = Long.parseLong(args[i++]);
+			    }
+			    catch (NumberFormatException e) {
+				Lib.assertNotReached("bad value for -s switch");
+			    }
+			}
+			else if (arg.equals("-x")) {
+			    Lib.assertTrue(i < args.length, "switch without argument");
+			    shellProgramName = args[i++];		    
+			}		    
+			else if (arg.equals("-z")) {
+			    System.out.print(copyright);
+			    System.exit(1);
+			}
+			// these switches are reserved for the autograder
+			else if (arg.equals("-[]")) {
 		    Lib.assertTrue(i < args.length, "switch without argument");
-		    Lib.enableDebugFlags(args[i++]);
-		}
-		else if (arg.equals("-h")) {
-		    System.out.print(help);
-		    System.exit(1);
-		}
-		else if (arg.equals("-m")) {
-		    Lib.assertTrue(i < args.length, "switch without argument");
-		    try {
-			numPhysPages = Integer.parseInt(args[i++]);
-		    }
-		    catch (NumberFormatException e) {
-			Lib.assertNotReached("bad value for -m switch");
-		    }
-		}
-		else if (arg.equals("-s")) {
-		    Lib.assertTrue(i < args.length, "switch without argument");
-		    try {
-			randomSeed = Long.parseLong(args[i++]);
-		    }
-		    catch (NumberFormatException e) {
-			Lib.assertNotReached("bad value for -s switch");
-		    }
-		}
-		else if (arg.equals("-x")) {
-		    Lib.assertTrue(i < args.length, "switch without argument");
-		    shellProgramName = args[i++];		    
-		}		    
-		else if (arg.equals("-z")) {
-		    System.out.print(copyright);
-		    System.exit(1);
-		}
-		// these switches are reserved for the autograder
-		else if (arg.equals("-[]")) {
-		    Lib.assertTrue(i < args.length, "switch without argument");
-		    configFileName = args[i++];
-		}
-		else if (arg.equals("--")) {
-		    Lib.assertTrue(i < args.length, "switch without argument");
-		    autoGraderClassName = args[i++];
-		}
+			    configFileName = args[i++];
+			}
+			else if (arg.equals("--")) {
+			    Lib.assertTrue(i < args.length, "switch without argument");
+			    autoGraderClassName = args[i++];
+			}
 	    }
 	}
 
@@ -174,7 +175,7 @@ public final class Machine {
 	    bank = new ElevatorBank(privilege);
 
 	if (Config.getBoolean("Machine.processor")) {
-	    if (numPhysPages == -1)
+	    if (numPhysPages == -1)	
 		numPhysPages = Config.getInteger("Processor.numPhysPages");
 	    processor = new Processor(privilege, numPhysPages);
 	}				      

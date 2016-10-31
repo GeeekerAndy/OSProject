@@ -25,3 +25,5 @@
 /SynchList.class
 /ThreadQueue.class
 /ThreadedKernel.class
+/KThread$AddJoin.class
+/KThread$TestJoin.class
