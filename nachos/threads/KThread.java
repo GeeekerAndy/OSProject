@@ -479,23 +479,21 @@ public class KThread {
      */
     public static void selfTest() {
 	Lib.debug(dbgThread, "Enter KThread.selfTest");
-	
-//	new KThread(new PingTest(1)).setName("forked thread").fork();
-//	new PingTest(0).run();
-	
-//	TestJoin testJoin = new TestJoin();
+		
+	/*
+	 * Task 1 / Phase 1
+	 */
+//	PingTest test5 = new PingTest(5);
 //	KThread newKThread = new KThread();
-//	newKThread.setTarget(testJoin);
+//	newKThread.setTarget(test5);
 //	newKThread.fork();
-////	newKThread.join();
-//	new PingTest(3).run();
-	
-	PingTest test5 = new PingTest(5);
-	KThread newKThread = new KThread();
-	newKThread.setTarget(test5);
-	newKThread.fork();
 //	newKThread.join();
-	new PingTest(4).run();
+//	new PingTest(4).run();
+	
+	/*
+	 * Task 2 / Phase 2
+	 */
+	Condition2.selfTest();
 	
 
     }
